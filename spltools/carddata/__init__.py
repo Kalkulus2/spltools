@@ -1,1 +1,1 @@
-from .getCardData import *
+from .get_card_data import *

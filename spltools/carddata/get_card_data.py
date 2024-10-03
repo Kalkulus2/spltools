@@ -1,7 +1,7 @@
 import json
 import urllib
 
-def getCardData():
+def get_card_data():
     """
     Retrieve details of all Splinterlands cards.
     Discard any Soulkeep data.
@@ -18,9 +18,9 @@ def getCardData():
     """
     try:
         with urllib.request.urlopen("https://api2.splinterlands.com/cards/get_details") as request:
-            carddata = json.loads(request.read())
-            carddata = [x for x in carddata if x['id'] < 10000]
-            return carddata
+            card_data = json.loads(request.read())
+            card_data = [x for x in card_data if x['id'] < 10001]
+            return card_data
     except urllib.error.URLError as e:
         print(f"Error {e}") 
         
