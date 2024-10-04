@@ -15,8 +15,8 @@ def get_card_data_raw():
     Returns
     -------
         
-    card_data : List of cards, where each element is a dictionary representing 
-        a card. 
+    card_data : List of cards, where each element is a dictionary 
+        representing a card. 
     """
     try:
         url = f"{settings.BASE_URL}/cards/get_details"
@@ -29,10 +29,11 @@ def get_card_data_raw():
         
 def get_card_data():
     """
-    Retrieve details of all Splinterlands cards. Discard any Soulkeep data. 
-    This function differs from get_card_data_raw in that it returns a dict
-    of cards, where the keys are the card ids, and the values are the entries
-    in the list of cards returned by the Splinterlands API.  
+    Retrieve details of all Splinterlands cards. Discard any Soulkeep 
+    data. This function differs from get_card_data_raw in that it
+    returns a dict of cards, where the keys are the card ids, and the 
+    values are the entries in the list of cards returned by the 
+    Splinterlands API.  
     
     Parameters
     ----------
@@ -42,8 +43,8 @@ def get_card_data():
     Returns
     -------
     
-    card_dict : Dict of cards, where each value is a dictionary representing 
-        a card. 
+    card_dict : Dict of cards, where each value is a dictionary
+        representing a card. 
     """
     raw_data = get_card_data_raw()
     card_dict = {}
