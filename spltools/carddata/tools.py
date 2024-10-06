@@ -1,4 +1,4 @@
-from .. import settings
+from spltools.settings import set_str_to_int
 
 def in_set(card_id, set_, card_data):
     """
@@ -26,15 +26,15 @@ def in_set(card_id, set_, card_data):
     
     """
     if (isinstance(set_, str)):
-        if (set_.lower() in settings.set_str_to_int.keys()):
-            set_ = settings.set_str_to_int[set_.lower()]
+        if (set_.lower() in set_str_to_int.keys()):
+            set_ = set_str_to_int[set_.lower()]
         else:
-            valid_set_strings = list(settings.set_str_to_int.keys())
+            valid_set_strings = list(set_str_to_int.keys())
             raise ValueError(
                 f"Valid set strings are {valid_set_strings}")
     else:
-        if (not set_ in settings.set_str_to_int.values()):
-            valid_values = list(settings.set_str_to_int.values())
+        if (not set_ in set_str_to_int.values()):
+            valid_values = list(set_str_to_int.values())
             raise ValueError(f"Valid set values are {valid_values}")
                 
     card_edition_str = card_data[card_id]['editions']

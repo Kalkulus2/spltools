@@ -1,6 +1,6 @@
 import json
 import urllib
-from .. import settings
+from spltools.settings import BASE_URL
 
 def get_card_data_raw():
     """
@@ -15,11 +15,12 @@ def get_card_data_raw():
     Returns
     -------
         
-    card_data : List of cards, where each element is a dictionary 
-        representing a card. 
+    card_data : list
+        List of cards, where each element is a dictionary representing
+        a card. 
     """
     try:
-        url = f"{settings.BASE_URL}/cards/get_details"
+        url = f"{BASE_URL}/cards/get_details"
         with urllib.request.urlopen(url) as request:
             card_data = json.loads(request.read())
             card_data = [x for x in card_data if x['id'] < 10001]
@@ -43,8 +44,9 @@ def get_card_data():
     Returns
     -------
     
-    card_dict : Dict of cards, where each value is a dictionary
-        representing a card. 
+    card_dict : dict
+        Dictionary of cards with lookup by id, where each value is
+        another dictionary representing a card. 
     """
     raw_data = get_card_data_raw()
     card_dict = {}

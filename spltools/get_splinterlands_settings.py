@@ -1,6 +1,6 @@
 import json
 import urllib
-from .settings import *
+from spltools.settings import BASE_URL
 
 def get_splinterlands_settings():
     """
@@ -14,7 +14,8 @@ def get_splinterlands_settings():
     Returns
     -------
         
-    settings : dictionary with splinterlands settings
+    settings : dict
+        Dictionary with Splinterlands settings
     """
     try:
         with urllib.request.urlopen(f"{BASE_URL}/settings") as request:
