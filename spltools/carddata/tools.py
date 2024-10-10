@@ -1,29 +1,30 @@
-from spltools.settings import set_str_to_int
+from spltools.settings import set_str_to_int, Edition, Tier
+
 
 def in_set(card_id, set_, card_data):
     """
     Checks if a card belongs to the given set.
-    
+
     Parameters
     ----------
-    
+
     card_id : int
         Integer id for the card
-    
+
     set_ : str or int
         String or integer id for the set (case insensitive). Valid names
         are "alpha", "beta", "untamed", "gladius", "chaos", "rebellion",
         and valid integers are 0, 1, 4, 6, 7, and 12.
-        
+
     card_data: dict
-        Card data dictionary. 
-    
+        Card data dictionary.
+
     Returns
     -------
-    
+
     tf : bool
         True if the card is in the set, False otherwise.
-    
+
     """
     if (isinstance(set_, str)):
         if (set_.lower() in set_str_to_int.keys()):
@@ -33,12 +34,12 @@ def in_set(card_id, set_, card_data):
             raise ValueError(
                 f"Valid set strings are {valid_set_strings}")
     else:
-        if (not set_ in set_str_to_int.values()):
+        if (set_ not in set_str_to_int.values()):
             valid_values = list(set_str_to_int.values())
             raise ValueError(f"Valid set values are {valid_values}")
-                
+
     card_edition_str = card_data[card_id]['editions']
-    if ("," in card_edition_str): # Alpha/Beta core
+    if ("," in card_edition_str):  # Alpha/Beta core
         eds = [int(x) for x in card_edition_str.split(",")]
         if (set_ in eds):
             return True
@@ -50,42 +51,46 @@ def in_set(card_id, set_, card_data):
         return True
     else:
         tier = card_data[card_id]['tier']
-        if (set_ == 0):
-            if (card_edition==2): # Alpha promo
+        if (set_ == Edition.ALPHA.value):
+            if (card_edition == Edition.PROMO.value):
                 if (card_id <= 78):
                     return True
                 else:
                     return False
-        elif (set_ == 1):
-            if (card_edition == 2 and tier is None #Beta promo  
-                and card_id > 78): 
+        elif (set_ == Edition.BETA.value):
+            if (card_edition == Edition.PROMO.value and tier is None
+                    and card_id > 78):
                 return True
-            elif (card_edition == 3 and tier is None): # Beta rewards
-                return True
-            else:
-                return False
-        elif (set_ == 4):
-            if (card_edition == 5):
-                return True
-            elif (card_edition == 2 and (tier in (3,4))): # Untamed promo
-                return True
-            elif (card_edition == 3 and tier == 4): # Untamed rewards
+            elif (card_edition == Edition.REWARDS.value and tier is None):
                 return True
             else:
                 return False
-        elif (set_ == 7):
-            if (card_edition == 8): # Riftwatchers
+        elif (set_ == Edition.UNTAMED.value):
+            if (card_edition == Edition.DICE.value):
                 return True
-            elif (card_edition in (2,3) and tier == 7): # Chaos promo/rewards
+            elif (card_edition == Edition.PROMO.value
+                  and (tier in (Tier.UNTAMED.value, Tier.DICE.value))):
                 return True
-            elif (card_edition == 10): # Chaos soulbounds
+            elif (card_edition == Edition.REWARDS.value
+                  and tier == Tier.DICE.value):
                 return True
             else:
                 return False
-        elif (set_ == 12):
-            if (card_edition == 2 and tier == 12): # Rebellion promos
+        elif (set_ == Edition.CHAOS.value):
+            if (card_edition == Edition.RIFT.value):
                 return True
-            elif (card_edition == 13): # Rebellion rewards
+            elif (card_edition in (Edition.PROMO.value, Edition.REWARDS.value)
+                  and tier == Tier.CHAOS.value):
+                return True
+            elif (card_edition == Edition.SOULBOUND.value):
+                return True
+            else:
+                return False
+        elif (set_ == Edition.REBELLION.value):
+            if (card_edition == Edition.PROMO.value
+                    and tier == Tier.REBELLION.value):
+                return True
+            elif (card_edition == Edition.SOULBOUNDRB.value):
                 return True
             else:
                 return False
