@@ -1,5 +1,6 @@
 import requests
-import json
+from spltools.settings import GUILD_URL
+
 
 class Guild:
     """Class for holding guild data
@@ -25,7 +26,7 @@ class Guild:
 
     def __init__(self, id="d14d94bfab9f2532e26c33732cdba602d316f5bf"):
         """Initialize the class from the unique guild identifier
-        
+
         Parameters
         ----------
         id : str
@@ -33,20 +34,20 @@ class Guild:
         """
         success = True
         try:
-            response = requests.get(f"https://api2.splinterlands.com/guilds/find?id={id}")
+            response = requests.get(f"{GUILD_URL}/find?id={id}")
         except Exception as E:
             success = False
             print("Error while downloading guild data:", E)
-        
+
         try:
             data = response.json()
         except Exception as E:
             success = False
             print("Error while parsing json:", E)
 
-        if(not success):
+        if (not success):
             return
-        
+
         # Setup guild class:
         self.id = id
         self.name = data['name']
@@ -56,25 +57,25 @@ class Guild:
         self.rating = int(data['rating'])
         self.rank = int(data['rank'])
         self._getMembers()
-        
-        
+
     def _getMembers(self):
         """Get guild member data
         """
-        if(self.members is None):
+        if (self.members is None):
             success = True
             try:
-                response = requests.get(f"https://api2.splinterlands.com/guilds/members?guild_id={self.id}")
+                response = requests.get(
+                    f"{GUILD_URL}/members?guild_id={self.id}")
             except Exception as E:
                 success = False
                 print("Error while downloading guild member data:", E)
-            
+
             try:
                 data = response.json()
             except Exception as E:
                 success = False
                 print("Error while parsing json:", E)
-            if(not success):
+            if (not success):
                 return []
             self.members = [p['player'] for p in data]
             return self.members
