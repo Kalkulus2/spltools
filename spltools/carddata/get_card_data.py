@@ -1,6 +1,4 @@
-import json
-import urllib
-from spltools.settings import BASE_URL
+from spltools.settings import BASE_URL, request_session
 
 
 def get_card_data_raw():
@@ -20,14 +18,14 @@ def get_card_data_raw():
         List of cards, where each element is a dictionary representing
         a card.
     """
-    try:
-        url = f"{BASE_URL}/cards/get_details"
-        with urllib.request.urlopen(url) as request:
-            card_data = json.loads(request.read())
-            card_data = [x for x in card_data if x['id'] < 10001]
-            return card_data
-    except urllib.error.URLError as e:
-        print(f"Error {e}")
+    url = f"{BASE_URL}/cards/get_details"
+    response = request_session.get(url)
+    if response:
+        card_data = response.json()
+        card_data = [x for x in card_data if x['id'] < 10001]
+        return card_data
+    else:
+        print(f"Error code {response.status_code}")
 
 
 def get_card_data():
@@ -51,7 +49,10 @@ def get_card_data():
         another dictionary representing a card.
     """
     raw_data = get_card_data_raw()
-    card_dict = {}
-    for c in raw_data:
-        card_dict[c['id']] = c
-    return card_dict
+    if raw_data is not None:
+        card_dict = {}
+        for c in raw_data:
+            card_dict[c['id']] = c
+        return card_dict
+    else:
+        print("Error in get_card_data_raw()")

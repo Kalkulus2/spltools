@@ -3,3 +3,6 @@
 
 # ignore python copiled files
 *.pyc
+
+# ignore the data directory
+data/ 

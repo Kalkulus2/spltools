@@ -1,4 +1,6 @@
+import requests
 from enum import Enum
+from requests.adapters import HTTPAdapter, Retry
 
 BASE_URL = "https://api2.splinterlands.com"
 GUILD_URL = f"{BASE_URL}/guilds"
@@ -39,3 +41,10 @@ MERITS_IMAGE = (f"{PREFIX_30X30}/{ARTWORK_URL}"
                 + "/website/icons/img_merit_256.png")
 SPS_IMAGE = (f"{PREFIX_30X30}/{ARTWORK_URL}"
              + "/website/ui_elements/shop/cl/img_sps-shard_128.png")
+
+
+request_session = requests.Session()
+retries = Retry(total=5,
+                backoff_factor=0.5,
+                status_forcelist=[500, 502, 503, 504])
+request_session.mount('http://', HTTPAdapter(max_retries=retries))

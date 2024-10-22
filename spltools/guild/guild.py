@@ -1,5 +1,4 @@
-import requests
-from spltools.settings import GUILD_URL
+from spltools.settings import BASE_URL, GUILD_URL, request_session
 
 
 class Guild:
@@ -30,22 +29,13 @@ class Guild:
         Parameters
         ----------
         id : str
-            the unique string identifier for the guild
+            The unique string identifier for the guild
         """
-        success = True
-        try:
-            response = requests.get(f"{GUILD_URL}/find?id={id}")
-        except Exception as E:
-            success = False
-            print("Error while downloading guild data:", E)
-
-        try:
+        response = request_session.get(f"{GUILD_URL}/find?id={id}")
+        if response:
             data = response.json()
-        except Exception as E:
-            success = False
-            print("Error while parsing json:", E)
-
-        if (not success):
+        else:
+            print("Error status code: ", response.status_code)
             return
 
         # Setup guild class:
@@ -61,23 +51,53 @@ class Guild:
     def _getMembers(self):
         """Get guild member data
         """
-        if (self.members is None):
-            success = True
-            try:
-                response = requests.get(
-                    f"{GUILD_URL}/members?guild_id={self.id}")
-            except Exception as E:
-                success = False
-                print("Error while downloading guild member data:", E)
-
-            try:
+        if self.members is None:
+            url = f"{GUILD_URL}/members?guild_id={self.id}"
+            response = request_session.get(url)
+            if response:
                 data = response.json()
-            except Exception as E:
-                success = False
-                print("Error while parsing json:", E)
-            if (not success):
+            else:
+                print("Error status code: ", response.status_code)
                 return []
-            self.members = [p['player'] for p in data]
+            self.members = [p['player'] for p in data
+                            if p['status'] == "active"]
             return self.members
+        return self.members
+
+    def get_brawl_records(self):
+        url = f"{GUILD_URL}/brawl_records?guild_id={self.id}"
+        response = request_session.get(url)
+        if response:
+            data = response.json()['results']
+            return data
         else:
-            return self.members
+            print("Error status code: ", response.status_code)
+            return None
+
+    def __str__(self):
+        strr = f"{self.name}, Rank: {self.rank}, Members: {len(self.members)}"
+        return strr
+
+
+def get_guild_list():
+    url = f"{GUILD_URL}/list"
+    response = request_session.get(url)
+    if response:
+        data = response.json()['guilds']
+        return data
+    else:
+        print("Error status code: ", response.status_code)
+        return None
+
+
+def get_player_guild(player):
+    url = f"{BASE_URL}/players/details?name={player}"
+    response = request_session.get(url)
+    if response:
+        data = response.json()
+        if data['guild'] is None:
+            return "-"
+        return data['guild']['name']
+    else:
+        print("Error status code: ", response.status_code)
+        return None

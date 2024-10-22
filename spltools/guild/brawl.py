@@ -1,7 +1,5 @@
-import requests
-from requests.adapters import HTTPAdapter, Retry
 from spltools.settings import TOURNAMENT_URL, SPS_IMAGE, MERITS_IMAGE, \
-    CROWN_IMAGE
+    CROWN_IMAGE, request_session
 
 
 class Brawl:
@@ -69,7 +67,10 @@ class Brawl:
             self.guild_wins[gn] = gd['wins']
             self.guild_losses[gn] = gd['losses']
             self.guild_draws[gn] = gd['draws']
-            self.guild_auto_wins[gn] = gd['auto_wins']
+            if ('auto_wins' in gd.keys()):
+                self.guild_auto_wins[gn] = gd['auto_wins']
+            else:
+                self.guild_auto_wins[gn] = 0
             self.guild_crowns[gn] = gd['total_payout']
             self.guild_sps[gn] = gd['member_sps_payout']
             self.guild_merits[gn] = gd['member_merits_payout']
@@ -84,14 +85,11 @@ class Brawl:
 
     def _get_brawl_data(self, brawl_data=None):
         if brawl_data is None:
-            s = requests.Session()
-            retries = Retry(total=5,
-                            backoff_factor=0.1,
-                            status_forcelist=[500, 502, 503, 504])
-            s.mount('http://', HTTPAdapter(max_retries=retries))
             url = (f'{TOURNAMENT_URL}/find_brawl?id={self.BRAWL_ID}'
                    + f'&guild_id={self.GUILD_ID}')
-            self.data = s.get(url).json()
+            response = request_session.get(url)
+            if response:
+                self.data = response.json()
         else:
             self.data = brawl_data
 
@@ -159,7 +157,10 @@ class BrawlerResults:
         self.player = data['player']
         self.wins = data['wins']
         self.losses = data['losses']
-        self.auto_wins = data['auto_wins']
+        if ('auto_wins' in data.keys()):
+            self.auto_wins = data['auto_wins']
+        else:
+            self.auto_wins = 0
         self.total_battles = data['total_battles']
         self.entered_battles = data['entered_battles']
         self.fray_index = data['fray_index']

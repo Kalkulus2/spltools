@@ -1,6 +1,4 @@
-import json
-import urllib
-from spltools.settings import BASE_URL
+from spltools.settings import BASE_URL, request_session
 
 
 def get_splinterlands_settings():
@@ -18,9 +16,9 @@ def get_splinterlands_settings():
     settings : dict
         Dictionary with Splinterlands settings
     """
-    try:
-        with urllib.request.urlopen(f"{BASE_URL}/settings") as request:
-            settings = json.loads(request.read())
-            return settings
-    except urllib.error.URLError as e:
-        print(f"Error {e}")
+    response = request_session.get(f"{BASE_URL}/settings")
+    if response:
+        settings = response.json()
+        return settings
+    else:
+        print(f"Error code {response.status_code}")
