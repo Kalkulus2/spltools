@@ -1,4 +1,6 @@
-from spltools.settings import set_str_to_int, Edition, Tier
+from spltools.settings import set_str_to_int, edition_to_str, Edition, Tier, \
+    HIVE_IMG_URL, ARTWORK_URL
+from spltools.carddata import get_card_data
 
 
 def in_set(card_id, set_, card_data):
@@ -95,3 +97,18 @@ def in_set(card_id, set_, card_data):
             else:
                 return False
     return False
+
+
+def hive_image(card_id, level, width, height, card_data=None):
+    if card_data is None:
+        card_data = get_card_data()
+    editions = card_data[card_id]['editions']
+    if "," in editions:
+        editions = editions.split(",")[-1]
+    edition = edition_to_str[int(editions)]
+    name = card_data[card_id]['name'].replace(" ", "%20")
+
+    url = f"{HIVE_IMG_URL}/{width}x{height}"
+    url += f"/{ARTWORK_URL}/cards_by_level/{edition}"
+    url += f"/{name}_lv{level}.png"
+    return url

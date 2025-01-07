@@ -4,11 +4,16 @@ from requests.adapters import HTTPAdapter, Retry
 
 BASE_URL = "https://api2.splinterlands.com"
 GUILD_URL = f"{BASE_URL}/guilds"
+BATTLE_URL = f"{BASE_URL}/battle"
+BATTLE_LINK_URL = "https://splinterlands.com/battle"
 TOURNAMENT_URL = f"{BASE_URL}/tournaments"
 
-set_str_to_int = {
-    "alpha": 0, "beta": 1, "untamed": 4, "gladius": 6, "chaos": 7,
-    "rebellion": 12}           
+set_str_to_int = {"alpha": 0, "beta": 1, "untamed": 4, "gladius": 6,
+                  "chaos": 7, "rebellion": 12}           
+edition_to_str = {0: "alpha", 1: "beta", 2: "promo", 3: "reward",
+                  4: "untamed", 5: "dice", 6: "gladius", 7: "chaos",
+                  8: "rift", 10: "soulbound", 12: "rebellion",
+                  13: "soulboundrb"}
 
 
 class Edition(Enum):
@@ -34,7 +39,8 @@ class Tier(Enum):
 
 
 ARTWORK_URL = "https://d36mxiodymuqjm.cloudfront.net"
-PREFIX_30X30 = "https://images.hive.blog/30x30"
+HIVE_IMG_URL = "https://images.hive.blog/"
+PREFIX_30X30 = f"{HIVE_IMG_URL}/30x30"
 CROWN_IMAGE = (f"{PREFIX_30X30}/{ARTWORK_URL}"
                + "/website/guilds/img_guild_crown_75.png")
 MERITS_IMAGE = (f"{PREFIX_30X30}/{ARTWORK_URL}"
