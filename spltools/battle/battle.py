@@ -71,6 +71,8 @@ class Battle:
         self.details = json.loads(data['details'])
         self.match_type = data['match_type']
         self.format = data['format']
+        if self.format is None:
+            self.format = "Wild"
         all_colors = ["Red", "Blue", "Green", "White", "Black", "Gold"]
         self.inactive = data['inactive'].split(",")
         self.active = [x for x in all_colors if x not in self.inactive]
