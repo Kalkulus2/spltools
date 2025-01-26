@@ -92,6 +92,7 @@ class Battle:
         strr += f"Format | {self.format}\n"
         strr += f"Mana | {self.mana_cap}\n"
         strr += f"Elements | {', '.join(self.active)}\n"
+        strr += f"Rules | {', '.join(self.ruleset)}\n"
         strr += f"Winner | {self.winner}\n"
         if images:
             if card_data is None:
