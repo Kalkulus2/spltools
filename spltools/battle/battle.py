@@ -61,10 +61,16 @@ class Team:
 
 class Battle:
     def __init__(self, bqid=None, data=None, save_dir=None):
-        if data is not None:
-            pass
-        else:
+        if data is None:
             data = get_battle_data(bqid, save_dir)
+        if data is None:
+            self.valid = False
+            self.errmsg = f"Could not fetch battle data for id: {bqid}"
+            return
+        if isinstance(data, str):
+            self.valid = False
+            self.errmsg = data
+            return
         self.bqid1 = data['battle_queue_id_1']
         self.bqid2 = data['battle_queue_id_2']
         self.player1, self.player2 = data['player_1'], data['player_2']
@@ -73,6 +79,10 @@ class Battle:
         self.format = data['format']
         if self.format is None:
             self.format = "Wild"
+        if ('tournament' in data.keys()
+                and 'sub_format' in data['tournament'].keys()
+                and data['tournament']['sub_format'] == "brawl"):
+            self.format = "Brawl"
         all_colors = ["Red", "Blue", "Green", "White", "Black", "Gold"]
         self.inactive = data['inactive'].split(",")
         self.active = [x for x in all_colors if x not in self.inactive]
@@ -84,12 +94,15 @@ class Battle:
         self.team2 = Team(self.details['team2'])
 
         self.url = f"{BATTLE_LINK_URL}/{self.bqid1}"
+        self.valid = True
 
     def markdown_summary(self, images=True, card_data=None):
+        if not self.valid:
+            return self.errmsg
         strr = f"[{self.player1} vs. {self.player2}]({self.url})||\n"
         strr += "-|-\n"
         strr += f"Type | {self.match_type}\n"
-        strr += f"Format | {self.format}\n"
+        strr += f"Format | {self.format.capitalize()}\n"
         strr += f"Mana | {self.mana_cap}\n"
         strr += f"Elements | {', '.join(self.active)}\n"
         strr += f"Rules | {', '.join(self.ruleset)}\n"
