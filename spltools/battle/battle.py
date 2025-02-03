@@ -47,11 +47,11 @@ class Team:
         self.summoner_uid = data['summoner']['uid']
         self.monster_uids = [x['uid'] for x in data['monsters']]
 
-    def get_names(self, carddata):
+    def get_names(self, carddata, suffix=''):
         if carddata is None:
             carddata = get_card_data()
-        return ([carddata[self.summoner_id]['name']] +
-                [carddata[x]['name'] for x in self.monster_ids])
+        return ([carddata[self.summoner_id]['name']+suffix] +
+                [carddata[x]['name']+suffix for x in self.monster_ids])
 
     def hive_images(self, width=100, height=140, card_data=None):
         if card_data is None:
@@ -99,8 +99,8 @@ class Battle:
         self.team1 = Team(self.details['team1'])
         self.team2 = Team(self.details['team2'])
         self.names = {}
-        t1_names = self.team1.get_names(self.card_data)
-        t2_names = self.team2.get_names(self.card_data)
+        t1_names = self.team1.get_names(self.card_data, suffix=" (blue)")
+        t2_names = self.team2.get_names(self.card_data, suffix=" (red)")
         for i, uid in enumerate([self.team1.summoner_uid]
                                 + self.team1.monster_uids):
             self.names[uid] = t1_names[i]
