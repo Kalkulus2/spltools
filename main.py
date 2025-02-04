@@ -13,11 +13,18 @@ def get_card_data():
 
 
 def generate_summary():
-    b = spltools.Battle(str(st.session_state.bqid_key).strip(),
-                        card_data=st.session_state.card_data)
-    st.session_state['battle_summary'] = b.markdown_summary()
-    st.session_state['battle_log'] = b.get_log(markdown=True)
-
+    bqid = str(st.session_state.bqid_key).strip()
+    if "/" in bqid:
+        bqid = bqid.split("/")[-1]
+    if "?" in bqid:
+        bqid = bqid.split("?")[0]
+    try:
+        b = spltools.Battle(bqid, card_data=st.session_state.card_data)
+        st.session_state['battle_summary'] = b.markdown_summary()
+        st.session_state['battle_log'] = b.get_log(markdown=True)
+    except Exception as E:
+        print(E)
+        st.session_state['battle_summary'] = None
 
 st.session_state['card_data'] = get_card_data()
 
@@ -33,8 +40,6 @@ with col2:
     bqid_button = st.button("Run", on_click=generate_summary)
 bsum_tab, log_tab, log_md_tab = st.tabs(["Battle Summary", "Battle Log",
                                          "Battle Log (Markdown)"])
-
-
 
 if 'battle_summary' not in st.session_state:
     st.session_state['battle_summary'] = None
