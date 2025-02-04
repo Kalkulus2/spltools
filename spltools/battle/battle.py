@@ -125,9 +125,9 @@ class Battle:
         if images:
             if card_data is None:
                 card_data = get_card_data()
-            strr += f"##### {self.player1}'s team:\n"
+            strr += f"##### {self.player1}'s team: \n"
             strr += self.team1.hive_images(card_data=card_data)
-            strr += f"\n##### {self.player2}'s team:\n"
+            strr += f"\n##### {self.player2}'s team: \n"
             strr += self.team2.hive_images(card_data=card_data)
         return strr
 
