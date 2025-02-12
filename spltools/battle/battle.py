@@ -85,6 +85,7 @@ class Team:
                       "average speed": 0,
                       "abilities": {}}
         abls = []
+        n_monsters = len(self.data['monsters'])
         atks = array([x['state']['stats'][0] for x in self.data['monsters']])
         rngs = array([x['state']['stats'][1] for x in self.data['monsters']])
         mags = array([x['state']['stats'][2] for x in self.data['monsters']])
@@ -110,6 +111,7 @@ class Team:
         if "Inspire" in counter:
             stats_dict['attack'] += counter["Inspire"]*unique_attackers
         trained = {}
+        # Look for weapons training
         for a in self.pre_battle:
             if ('details' in a.keys()
                     and a['details']['name'] == "Weapons Training"):
@@ -123,7 +125,20 @@ class Team:
             stats_dict['attack'] += v['attack']
             stats_dict['ranged'] += v['ranged']
             stats_dict['magic'] += v['magic']
-
+        # Look for summoner buffs for speed, health, armor
+        for a in self.pre_battle:
+            if (a['type'] == "buff" and 'details' in a.keys()
+                    and a['details']['name'] == "Summoner"
+                    and 'stats' in a['details'].keys()):
+                for k, v in a['details']['stats'].items():
+                    if v > 0:
+                        if k == "armor":
+                            stats_dict['armor'] += v*n_monsters
+                        elif k == "speed":
+                            stats_dict['average speed'] += v
+                        elif k == "health":
+                            stats_dict['health'] += v*n_monsters
+        
         strr = ("Attack | Ranged | Magic | Armor | Health | Average Speed\n"
                 + "-|-|-|-|-|-\n"
                 + f"{stats_dict['attack']} | {stats_dict['ranged']} |"
@@ -367,7 +382,8 @@ class BattleLogParser():
             columns[4] = a['damage']
             if "hit_chance" in a.keys():
                 columns[5:] = [round(a['hit_chance'], 2), a['hit_val']]
-            if a['type'] in ("melee attack", "ranged attack", "magic attack"):
+            if a['type'] in ("melee attack", "ranged attack", "magic attack",
+                             "blast", "execute", "retaliate", "spite"):
                 self.tracker[tname]['damage taken'] \
                     += a['damage']
                 self.tracker[iname]['damage done'] \
