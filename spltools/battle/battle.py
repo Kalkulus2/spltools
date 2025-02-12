@@ -100,8 +100,8 @@ class Team:
         for m in self.data['monsters']:
             abls += m['state']['abilities']
         unique_attackers = sum(atks > 0)
-        unique_rangers = sum(mags > 0)
-        unique_magics = sum(rngs > 0)
+        unique_rangers = sum(rngs > 0)
+        unique_magics = sum(mags > 0)
         counter = Counter(abls)
         stats_dict['abilities'] = dict(counter)
         summoner_stats = self.data['summoner']['state']['stats']
