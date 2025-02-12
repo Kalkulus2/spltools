@@ -2,6 +2,8 @@ from os.path import isfile, isdir
 from os import makedirs
 from spltools.settings import BATTLE_URL, BATTLE_LINK_URL, request_session
 from spltools.carddata import hive_image, get_card_data
+from collections import Counter
+from numpy import array
 import json
 
 
@@ -39,13 +41,15 @@ def get_battle_data(bqid, save_dir=None):
 
 
 class Team:
-    def __init__(self, data):
+    def __init__(self, data, pre_battle=None):
+        self.data = data
         self.summoner_id = data['summoner']['card_detail_id']
         self.summoner_level = data['summoner']['level']
         self.monster_ids = [x['card_detail_id'] for x in data['monsters']]
         self.monster_levels = [x['level'] for x in data['monsters']]
         self.summoner_uid = data['summoner']['uid']
         self.monster_uids = [x['uid'] for x in data['monsters']]
+        self.pre_battle = pre_battle
 
     def get_names(self, carddata, suffix=''):
         if carddata is None:
@@ -61,6 +65,98 @@ class Team:
         for m, l in zip(self.monster_ids, self.monster_levels):
             strr += f" {hive_image(m, l, width, height, card_data=card_data)}"
         return strr
+
+    def stats(self):
+        """
+        Compute the total stats for the team by summing up individual
+        monster stats.
+
+        Returns
+        -------
+        dict
+            A dictionary containing the total values for attack,
+            ranged, magic, health, armor, and speed.
+        """
+        stats_dict = {"attack": 0,
+                      "ranged": 0,
+                      "magic": 0,
+                      "health": 0,
+                      "armor": 0,
+                      "average speed": 0,
+                      "abilities": {}}
+        abls = []
+        atks = array([x['state']['stats'][0] for x in self.data['monsters']])
+        rngs = array([x['state']['stats'][1] for x in self.data['monsters']])
+        mags = array([x['state']['stats'][2] for x in self.data['monsters']])
+        arms = array([x['state']['stats'][3] for x in self.data['monsters']])
+        hlts = array([x['state']['stats'][4] for x in self.data['monsters']])
+        spds = array([x['state']['stats'][5] for x in self.data['monsters']])
+        stats_dict['attack'] = sum(atks)
+        stats_dict['ranged'] = sum(rngs)
+        stats_dict['magic'] = sum(mags)
+        stats_dict['armor'] = sum(arms)
+        stats_dict['health'] = sum(hlts)
+        stats_dict['average speed'] = round(sum(spds)/len(spds), 2)
+        for m in self.data['monsters']:
+            abls += m['state']['abilities']
+        unique_attackers = sum(atks > 0)
+        unique_rangers = sum(mags > 0)
+        unique_magics = sum(rngs > 0)
+        counter = Counter(abls)
+        stats_dict['abilities'] = dict(counter)
+        summoner_stats = self.data['summoner']['state']['stats']
+        if "Swiftness" in counter:
+            stats_dict['average speed'] += counter["Swiftness"]
+        if "Inspire" in counter:
+            stats_dict['attack'] += counter["Inspire"]*unique_attackers
+        trained = {}
+        for a in self.pre_battle:
+            if ('details' in a.keys()
+                    and a['details']['name'] == "Weapons Training"):
+                gs = a['group_state']
+                for m in gs:
+                    other = m['state']['other']
+                    for o in other:
+                        if o[0] == "Trained":
+                            trained[m['monster']] = o[1]
+        for k, v in trained.items():
+            stats_dict['attack'] += v['attack']
+            stats_dict['ranged'] += v['ranged']
+            stats_dict['magic'] += v['magic']
+
+        strr = ("Attack | Ranged | Magic | Armor | Health | Average Speed\n"
+                + "-|-|-|-|-|-\n"
+                + f"{stats_dict['attack']} | {stats_dict['ranged']} |"
+                + f"{stats_dict['magic']} | {stats_dict['armor']} |"
+                + f"{stats_dict['health']} | {stats_dict['average speed']}\n\n")
+
+        if "Inspire" in counter and unique_attackers < 3:
+            strr += ("You have a unit with Inspire but only "
+                     + f"{unique_attackers} melee attackers. Consider adding "
+                     + "more melee attackers to more efficiently use this "
+                     + "ability.\n\n")
+        if summoner_stats[0] > 0 and unique_attackers < 3:
+            strr += ("You have a summoner that boosts attack but only "
+                     + f"{unique_attackers} melee attackers. Consider adding "
+                     + "more melee attackers to more efficiently use this "
+                     + "summoner.\n\n")
+        if summoner_stats[1] > 0 and unique_rangers < 3:
+            strr += ("You have a summoner that boosts ranged but only "
+                     + f"{unique_rangers} ranged attackers. Consider adding "
+                     + "more ranged attackers to more efficiently use this "
+                     + "summoner.\n\n")
+        if summoner_stats[2] > 0 and unique_magics < 3:
+            strr += ("You have a summoner that boosts magic but only "
+                     + f"{unique_magics} magic attackers. Consider adding "
+                     + "more magic attackers to more efficiently use this "
+                     + "summoner.\n\n")
+
+        if stats_dict['average speed'] < 3 and "True Strike" not in counter:
+            strr += ("Your team has an average speed of "
+                     + f"{stats_dict['average speed']}. This makes it "
+                     + "weak against miss-based defensive strategies.")
+
+        return stats_dict, strr
 
 
 class Battle:
@@ -96,8 +192,8 @@ class Battle:
         self.mana_cap = data['mana_cap']
         self.winner = self.details['winner']
 
-        self.team1 = Team(self.details['team1'])
-        self.team2 = Team(self.details['team2'])
+        self.team1 = Team(self.details['team1'], self.details['pre_battle'])
+        self.team2 = Team(self.details['team2'], self.details['pre_battle'])
         self.names = {}
         t1_names = self.team1.get_names(self.card_data, suffix=" (blue)")
         t2_names = self.team2.get_names(self.card_data, suffix=" (red)")
@@ -156,6 +252,13 @@ class BattleLogParser():
         self.ruleset = battle.ruleset
         self.names = battle.names
         self.round = 1
+        self.tracker = {}
+        for m in self.team1.monster_uids + self.team2.monster_uids:
+            self.tracker[self.names[m]] = {"damage done": 0,
+                                           "damage taken": 0,
+                                           "healing done": 0,
+                                           "armor repaired": 0,
+                                           "units killed": 0}
         self.column_header = self.construct_row(
             ["Round", "Initiator", "Action", "Target", "Value", "Hit chance",
              "RNG"])
@@ -250,16 +353,31 @@ class BattleLogParser():
                    self.names[a['target']], '', '', '']
         if "damage" in a.keys():
             columns[4] = a['damage']
+            if a['type'] in ("melee attack", "ranged attack", "magic attack"):
+                self.tracker[self.names[a['target']]]['damage taken'] \
+                    += a['damage']
         self.text += self.construct_row(columns)
 
     def action_it(self, a):
-        # ~ print(list(a.keys()))
-        columns = [self.get_round_string(), self.names[a['initiator']],
-                   a['type'], self.names[a['target']], '', '', '']
+        iname = self.names[a['initiator']]
+        tname = self.names[a['target']]
+        columns = [self.get_round_string(), iname,
+                   a['type'], tname, '', '', '']
         if "damage" in a.keys():
             columns[4] = a['damage']
             if "hit_chance" in a.keys():
-                columns[5:] = [a['hit_chance'], a['hit_val']]
+                columns[5:] = [round(a['hit_chance'], 2), a['hit_val']]
+            if a['type'] in ("melee attack", "ranged attack", "magic attack"):
+                self.tracker[tname]['damage taken'] \
+                    += a['damage']
+                self.tracker[iname]['damage done'] \
+                    += a['damage']
+            elif a['type'].lower() in ("tank heal", "heal", "triage"):
+                self.tracker[iname]['healing done'] += a['damage']
+            elif a['type'].lower() == "repair":
+                self.tracker[iname]['armor repaired'] += a['damage']
+            if a['state']['stats'][4] == 0:
+                self.tracker[iname]["units killed"] += 1
         self.text += self.construct_row(columns)
 
     def get_summoner_buff_targets(self, a, rev=False):
@@ -331,6 +449,10 @@ class BattleLogParser():
         targets = [self.names[x['monster']] for x in a['group_state']]
         name = a['type']
         columns = [self.get_round_string(), "", name] + [""]*4
+        if len(a['group_state']) == 0:
+            if a['type'] in ('zapped', "corrosive"):
+                self.text += self.construct_row(columns)
+                return
         if 'dmg' in a['group_state'][0].keys():
             dmg = a['group_state'][0]['dmg']
             columns[3:5] = [targets[0], dmg]
@@ -342,3 +464,14 @@ class BattleLogParser():
                 self.text += self.construct_row(columns)
         else:
             print("Unhandled:", a)
+
+    def get_tracker_markdown(self, team='red'):
+        strr = ("Unit | Damage Done | Damage taken | Healing Done"
+                + " | Armor Repaired | Units Killed\n"
+                + "-|-|-|-|-|-\n")
+        for k, v in self.tracker.items():
+            if f"({team})" in k:
+                strr += (f"{k} | {v['damage done']} | {v['damage taken']}"
+                         + f" | {v['healing done']} | {v['armor repaired']}"
+                         + f" | {v['units killed']}\n")
+        return strr+"\n"
