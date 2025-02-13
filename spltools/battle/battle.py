@@ -125,11 +125,13 @@ class Team:
             stats_dict['attack'] += v['attack']
             stats_dict['ranged'] += v['ranged']
             stats_dict['magic'] += v['magic']
+
         # Look for summoner buffs for speed, health, armor
         for a in self.pre_battle:
             if (a['type'] == "buff" and 'details' in a.keys()
                     and a['details']['name'] == "Summoner"
-                    and 'stats' in a['details'].keys()):
+                    and 'stats' in a['details'].keys()
+                    and a['initiator'] == self.summoner_uid):
                 for k, v in a['details']['stats'].items():
                     if v > 0:
                         if k == "armor":
@@ -138,7 +140,6 @@ class Team:
                             stats_dict['average speed'] += v
                         elif k == "health":
                             stats_dict['health'] += v*n_monsters
-        
         strr = ("Attack | Ranged | Magic | Armor | Health | Average Speed\n"
                 + "-|-|-|-|-|-\n"
                 + f"{stats_dict['attack']} | {stats_dict['ranged']} |"
